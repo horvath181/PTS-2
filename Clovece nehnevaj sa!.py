@@ -78,7 +78,6 @@ def movable(player, rolled, start=False):
                 figures.append(i)
     return str(figures).strip('[]')
 
-# main function
 def main():
     global tmp
     global currentState
@@ -106,8 +105,11 @@ def main():
                     print("You can't move.")
                     time.sleep(1)
             else:
-                print("Possible movements with figures: %s."%(movable(playing,dice,True)))
+                moving=movable(playing,dice,True)
+                print("Possible movements with figures: %s."%(moving))
                 com=int(input("Your choice: "))
+                while not com in moving:
+                    com=int(input("Can't move that one, try again: "))
                 tmp[playing][com]=0+(playing*10)
                 print("Moved figure %d to %d."%(com,tmp[playing][com]))
                 checkColisions(playing, tmp[playing][com])
@@ -121,8 +123,11 @@ def main():
                 counter=4
             print("Dice: ",dice)
             time.sleep(0.5)
-            print("Possible movements with figures: %s."%(movable(playing,dice)))
+            moving=movable(playing,dice)
+            print("Possible movements with figures: %s."%(moving))
             com=int(input("Your choice: "))
+            while not com in moving:
+                com=int(input("Can't move that one, try again: "))
             move(playing,com,dice)
         playing=(playing+1)%4
         currentState=reloadState(tmp)
