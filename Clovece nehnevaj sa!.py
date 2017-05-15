@@ -20,14 +20,38 @@ def reloadState(state):
     return (tuple(state[0]), tuple(state[1]), tuple(state[2]), tuple(state[3]))
 
 
+# checks if loaded value is of type int
+def load(moving):
+    com = -1
+    helpCom = input("Your choice: ")
+    while True:
+        try:
+            com = int(helpCom)
+            while not com in moving:
+                if com > 3:
+                    helpCom = input("You don't have figure with that number, try again: ")
+                    com = int(helpCom)
+                else:
+                    helpCom = input("Can't move that one, try again: ")
+                    com = int(helpCom)
+            return com
+                    
+        except ValueError:
+            helpCom = input("Not a valid value, try again:")
+            
+    return com
+
+
 # writes out current state of game
 def writeState():
+    print("__________________________________________________")
     print("Position \'-1\' means, that the figure is on a starting position.")
-    print("Player||Figures                    ||Score")
+    print  ("Player||Figure: Position           ||Score")
     for i in range(0, 4):
         print("% 6d||0:% 4d|1:% 4d|2:% 4d|3:% 4d||% 3d" %
             (i, currentState[i][0], currentState[i][1],
             currentState[i][2], currentState[i][3], currentState[i][4]))
+    print("__________________________________________________")
 
 
 # returns a random number from interval <0,6>
@@ -68,14 +92,24 @@ def checkColisions(player, position):
 def move(player, figure, rolled):
     was = tmp[player][figure]
     finish = player*10
-    now = tmp[player][figure] + rolled
-    if player < 2:
-        was -= 40
-    if was in range(finish - 12, finish) and now in range(finish, finish + 12):
-        tmp[player][4] += 1
-    tmp[player][figure] = (tmp[player][figure] + rolled) % 40
-    print("Moved figure %d to %d." % (figure, tmp[player][figure]))
-    checkColisions(player, tmp[player][figure])
+    if was == -1:
+        if rolled == 6:
+            now = finish
+        else:
+            print("Unexpected movement.")
+            quit()
+    else:
+        now = tmp[player][figure] + rolled
+        if player < 2:
+            if was > 10: was -= 40
+            now %= 40
+        if was in range(finish - 12, finish) and now in range(finish, finish + 12):
+            tmp[player][4] += 1
+        now %= 40
+    
+    tmp[player][figure] = now
+    print("Moved figure %d to position %d." % (figure, now))
+    checkColisions(player, now)
 
 
 # makes a list of movable figures and returns them as list
@@ -93,6 +127,7 @@ def movable(player, rolled, start = False):
 def main():
     global tmp
     global currentState
+    start = time.time()
     # number of current player
     playing = 0
     while checkScore() == False:
@@ -103,6 +138,8 @@ def main():
         time.sleep(0.5)
         # counts three throws player has if no figure is in play
         counter = 0
+        # automated test
+        #com = 0
         tmp = copyState(currentState)
         while checkPosition(playing):
             dice = roll()
@@ -119,12 +156,8 @@ def main():
             else:
                 moving = movable(playing, dice, True)
                 print("Possible movements with figures: %s." % (moving))
-                com = int(input("Your choice: "))
-                while not com in moving:
-                    com = int(input("Can't move that one, try again: "))
-                tmp[playing][com] = 0 + (playing * 10)
-                print("Moved figure %d to %d." % (com, tmp[playing][com]))
-                checkColisions(playing, tmp[playing][com])
+                com = load(moving)
+                move(playing, com, dice)
             counter += 1
         # counts if player rolled 6, if he did he only gets one more roll
         while ended == False and counter < 4:
@@ -137,14 +170,16 @@ def main():
             time.sleep(0.5)
             moving = movable(playing, dice)
             print("Possible movements with figures: %s." % (moving))
-            com = int(input("Your choice: "))
-            while not com in moving:
-                com = int(input("Can't move that one, try again: "))
+            com = load(moving)
+            if com == -1:
+                print("ERROR: Com has not been properly loaded.")
+                quit()
             move(playing, com, dice)
         playing = (playing + 1) % 4
         currentState = reloadState(tmp)
         time.sleep(2)
     writeState()
     print("The winner is: Player %d." % (checkScore()[1]))
+    print("Program worked", time.time() - start, "seconds")
 
 main()
